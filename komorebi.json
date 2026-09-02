@@ -1,0 +1,53 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/master/schema.json",
+
+  "window_hiding_behaviour": "Cloak",
+
+  "cross_monitor_move_behaviour": "Insert",
+
+  "mouse_follows_focus": true,
+
+  "default_workspace_padding": 1,
+  "default_container_padding": 0,
+
+  "global_work_area_offset": {
+    "left": 0,
+    "top": 44,
+    "right": 0,
+    "bottom": 0
+  },
+
+  "border": true,
+  "border_width": 2,
+  "border_offset": -1,
+  "border_style": "Rounded",
+  "border_implementation": "Komorebi",
+  "border_colours": {
+    "single": "#8DBCFF",
+    "stack": "#8DBCFF",
+    "monocle": "#8DBCFF"
+  },
+
+  "floating_layer_placement": "Center",
+  "toggle_float_placement": "CenterAndResize",
+
+  "monitors": [
+    {
+      "workspaces": [
+        { "name": "1", "tile": true },
+        { "name": "2", "tile": true },
+        { "name": "3", "tile": true },
+        { "name": "4", "tile": true },
+        { "name": "5", "tile": true },
+        { "name": "6", "tile": true },
+        { "name": "7", "tile": true },
+        { "name": "8", "tile": true },
+        { "name": "9", "tile": true }
+      ]
+    }
+  ],
+
+  "ignore_rules": [
+    { "kind": "Exe", "id": "zebar.exe", "matching_strategy": "Equals" }
+  ]
+}
