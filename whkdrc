@@ -1,0 +1,115 @@
+.shell powershell
+
+# =====================================================================
+# whkdrc — Midnight Eclipse keybindings for komorebi
+#
+# Alt is the window-manager modifier. Win stays with Windows, so Win+D,
+# Win+E, Win+L, Win+Tab and Win+1..9 (taskbar apps) keep working.
+# Workspaces are zero-indexed in komorebic: Alt+1 is workspace 0.
+# See README.md for the full table.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Focus the window in a direction (vim keys or arrows)
+# ---------------------------------------------------------------------
+alt + h                 : komorebic focus left
+alt + left              : komorebic focus left
+alt + l                 : komorebic focus right
+alt + right             : komorebic focus right
+alt + k                 : komorebic focus up
+alt + up                : komorebic focus up
+alt + j                 : komorebic focus down
+alt + down              : komorebic focus down
+
+# ---------------------------------------------------------------------
+# Move the focused window in a direction
+# ---------------------------------------------------------------------
+alt + shift + h         : komorebic move left
+alt + shift + left      : komorebic move left
+alt + shift + l         : komorebic move right
+alt + shift + right     : komorebic move right
+alt + shift + k         : komorebic move up
+alt + shift + up        : komorebic move up
+alt + shift + j         : komorebic move down
+alt + shift + down      : komorebic move down
+
+# ---------------------------------------------------------------------
+# Resize the focused window along an axis
+# ---------------------------------------------------------------------
+alt + u                 : komorebic resize-axis horizontal decrease
+alt + p                 : komorebic resize-axis horizontal increase
+alt + i                 : komorebic resize-axis vertical decrease
+alt + o                 : komorebic resize-axis vertical increase
+
+# ---------------------------------------------------------------------
+# Layouts: cycle through komorebi's layouts on the focused workspace
+# ---------------------------------------------------------------------
+alt + v                 : komorebic cycle-layout next
+
+# ---------------------------------------------------------------------
+# Choose where the NEXT window opens relative to the focused one (BSP),
+# or cancel a pending choice
+# ---------------------------------------------------------------------
+alt + ctrl + h          : komorebic preselect-direction left
+alt + ctrl + left       : komorebic preselect-direction left
+alt + ctrl + l          : komorebic preselect-direction right
+alt + ctrl + right      : komorebic preselect-direction right
+alt + ctrl + k          : komorebic preselect-direction up
+alt + ctrl + up         : komorebic preselect-direction up
+alt + ctrl + j          : komorebic preselect-direction down
+alt + ctrl + down       : komorebic preselect-direction down
+alt + ctrl + c          : komorebic cancel-preselect
+
+# ---------------------------------------------------------------------
+# Floating, fullscreen, minimize, close
+#   Alt+F        monocle: one window fills the work area (the bar stays)
+#   Alt+Shift+F  maximize: covers the whole screen, bar included
+# ---------------------------------------------------------------------
+alt + t                 : komorebic toggle-float
+alt + f                 : komorebic toggle-monocle
+alt + shift + f         : komorebic toggle-maximize
+alt + m                 : komorebic minimize
+alt + shift + q         : komorebic close
+
+# ---------------------------------------------------------------------
+# komorebi itself
+# ---------------------------------------------------------------------
+alt + shift + p         : komorebic toggle-pause
+alt + shift + e         : komorebic stop
+alt + shift + r         : komorebic reload-configuration
+alt + shift + w         : komorebic retile
+
+# ---------------------------------------------------------------------
+# Terminal. Launched through Explorer so it opens as the normal user even
+# when whkd runs elevated (see autostart/ in README.md).
+# ---------------------------------------------------------------------
+alt + return            : explorer.exe 'shell:AppsFolder\Microsoft.WindowsTerminal_8wekyb3d8bbwe!App'
+
+# ---------------------------------------------------------------------
+# Switch workspace (Alt+1..9 -> workspace 0..8), cycle, or go back
+# ---------------------------------------------------------------------
+alt + 1                 : komorebic focus-workspace 0
+alt + 2                 : komorebic focus-workspace 1
+alt + 3                 : komorebic focus-workspace 2
+alt + 4                 : komorebic focus-workspace 3
+alt + 5                 : komorebic focus-workspace 4
+alt + 6                 : komorebic focus-workspace 5
+alt + 7                 : komorebic focus-workspace 6
+alt + 8                 : komorebic focus-workspace 7
+alt + 9                 : komorebic focus-workspace 8
+alt + s                 : komorebic cycle-workspace next
+alt + a                 : komorebic cycle-workspace previous
+alt + d                 : komorebic focus-last-workspace
+
+# ---------------------------------------------------------------------
+# Move the focused window to a workspace (focus follows it)
+# ---------------------------------------------------------------------
+alt + shift + 1         : komorebic move-to-workspace 0
+alt + shift + 2         : komorebic move-to-workspace 1
+alt + shift + 3         : komorebic move-to-workspace 2
+alt + shift + 4         : komorebic move-to-workspace 3
+alt + shift + 5         : komorebic move-to-workspace 4
+alt + shift + 6         : komorebic move-to-workspace 5
+alt + shift + 7         : komorebic move-to-workspace 6
+alt + shift + 8         : komorebic move-to-workspace 7
+alt + shift + 9         : komorebic move-to-workspace 8
