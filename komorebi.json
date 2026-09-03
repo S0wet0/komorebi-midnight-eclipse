@@ -47,7 +47,52 @@
     }
   ],
 
+  "manage_rules": [
+    [
+      { "kind": "Exe", "id": "(?i)^claude\\.exe$", "matching_strategy": "Regex" },
+      { "kind": "Class", "id": "Chrome_WidgetWin_1", "matching_strategy": "Equals" },
+      { "kind": "Title", "id": "Claude", "matching_strategy": "Equals" }
+    ]
+  ],
+
+  "tray_and_multi_window_applications": [
+    { "kind": "Exe", "id": "(?i)^claude\\.exe$", "matching_strategy": "Regex" }
+  ],
+
   "ignore_rules": [
-    { "kind": "Exe", "id": "zebar.exe", "matching_strategy": "Equals" }
+    { "kind": "Exe", "id": "zebar.exe", "matching_strategy": "Equals" },
+
+    { "kind": "Class", "id": "MSCTFIME UI", "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "IME", "matching_strategy": "Equals" },
+
+    [
+      { "kind": "Title", "id": "[Pp]icture.in.[Pp]icture", "matching_strategy": "Regex" },
+      { "kind": "Class", "id": "Chrome_WidgetWin_1|MozillaDialogClass", "matching_strategy": "Regex" }
+    ],
+
+    [
+      { "kind": "Title", "id": "Command Palette", "matching_strategy": "Equals" },
+      { "kind": "Class", "id": "WinUIDesktopWin32WindowClass", "matching_strategy": "Equals" }
+    ],
+
+    [
+      { "kind": "Exe", "id": "(?i)^Lively\\.exe$", "matching_strategy": "Regex" },
+      { "kind": "Class", "id": "HwndWrapper", "matching_strategy": "Contains" }
+    ],
+
+    [
+      { "kind": "Exe", "id": "(?i)^EXCEL\\.exe$", "matching_strategy": "Regex" },
+      { "kind": "Class", "id": "XLMAIN", "matching_strategy": "DoesNotEqual" }
+    ],
+
+    [
+      { "kind": "Exe", "id": "(?i)^WINWORD\\.exe$", "matching_strategy": "Regex" },
+      { "kind": "Class", "id": "OpusApp", "matching_strategy": "DoesNotEqual" }
+    ],
+
+    [
+      { "kind": "Exe", "id": "(?i)^POWERPNT\\.exe$", "matching_strategy": "Regex" },
+      { "kind": "Class", "id": "PPTFrameClass", "matching_strategy": "DoesNotEqual" }
+    ]
   ]
 }
