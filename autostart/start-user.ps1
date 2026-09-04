@@ -62,6 +62,7 @@ function Allow-Restart {
 }
 
 Log '--- user supervisor starting ---'
+if (-not (Test-Path $Zebar)) { Log "Zebar not found at $Zebar; nothing to supervise"; exit 0 }
 if (-not (Wait-ForKomorebi 120)) { Log 'komorebi not answering after 120s; starting zebar anyway' }
 
 $zebarProc = $null; $zebarStopped = $false

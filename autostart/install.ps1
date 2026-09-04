@@ -44,18 +44,41 @@ Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; Write-Host "stopped old supervisor pid $($_.ProcessId)" }
 
 # --- 1. protected install folder ---------------------------------------------
-New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'logs') | Out-Null
-Copy-Item (Join-Path $ConfigDir 'whkdrc')    (Join-Path $Root 'whkdrc') -Force
-Copy-Item (Join-Path $Source 'start-elevated.ps1')    $Root -Force
-Copy-Item (Join-Path $Source 'start-user.ps1')        $Root -Force
 # Well-known SIDs, so this works on non-English Windows too:
 #   S-1-5-32-544 Administrators, S-1-5-18 SYSTEM, S-1-5-32-545 Users.
 # Owner is set to Administrators: an owner can always rewrite the ACL, so the
 # normal (non-elevated) user must not own it.
-& icacls $Root /setowner '*S-1-5-32-544' /T /C /Q | Out-Null
-& icacls $Root /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' /T /C /Q | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "icacls failed ($LASTEXITCODE)" }
-Write-Host 'install folder created and locked to Administrators/SYSTEM (others read-only)'
+# The explicit ACL goes on the FOLDER ONLY; everything inside inherits it.
+# (The first version applied it recursively with /T: on files the (OI)(CI)
+# grants were rejected after /inheritance:r had already stripped the inherited
+# entries, leaving the scripts with an empty ACL that nobody, elevated or not,
+# could read - so both tasks "ran" and did nothing.)
+New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'logs') | Out-Null
+& icacls $Root /setowner '*S-1-5-32-544' /C /Q | Out-Null
+& icacls $Root /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' /C /Q | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "icacls on $Root failed ($LASTEXITCODE)" }
+# Repair anything left inside by an earlier install: replace each child's
+# ACL with the inherited one, then make sure Administrators own it. Reset
+# first: on a file with an empty ACL, taking ownership is denied, but its
+# owner (Administrators) may still rewrite the ACL.
+if (Get-ChildItem -LiteralPath $Root -Force) {
+    & icacls "$Root\*" /reset /T /C /Q | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "icacls /reset inside $Root failed ($LASTEXITCODE)" }
+    & icacls "$Root\*" /setowner '*S-1-5-32-544' /T /C /Q | Out-Null
+}
+Copy-Item (Join-Path $ConfigDir 'whkdrc')    (Join-Path $Root 'whkdrc') -Force
+Copy-Item (Join-Path $Source 'start-elevated.ps1')    $Root -Force
+Copy-Item (Join-Path $Source 'start-user.ps1')        $Root -Force
+# Verify: every file must grant Users read (the User task runs unelevated) and
+# must not grant Users anything more.
+foreach ($f in Get-ChildItem -LiteralPath $Root -Recurse -Force -File) {
+    $users = (Get-Acl -LiteralPath $f.FullName).Access |
+        Where-Object { $_.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value -eq 'S-1-5-32-545' }
+    $rights = ($users | ForEach-Object { $_.FileSystemRights.ToString() }) -join ','
+    if ($rights -notmatch 'ReadAndExecute') { throw "Users can't read $($f.FullName) (rights: '$rights')" }
+    if ($rights -match 'Write|Modify|FullControl|Delete|ChangePermissions|TakeOwnership') { throw "Users can modify $($f.FullName) (rights: '$rights')" }
+}
+Write-Host 'install folder created and locked to Administrators/SYSTEM (others read-only); ACLs verified'
 
 # Keep the user-profile whkdrc in sync too, so a manual `komorebic start --whkd`
 # (normal privileges) still has the same bindings. The tasks don't read it.
@@ -79,8 +102,13 @@ Register-Supervisor 'User'     'start-user.ps1'     'Limited' 'komorebi-desktop:
 
 # --- 3. switch over now ------------------------------------------------------
 Write-Host 'stopping current komorebi / whkd / Zebar...'
-& 'C:\Program Files\komorebi\bin\komorebic.exe' stop *> $null
-Start-Sleep -Seconds 2
+# Only if it's running: under ErrorActionPreference=Stop, Windows PowerShell
+# 5.1 turns a native program's stderr into a terminating error even when
+# redirected, and komorebic prints one when komorebi isn't there.
+if (Get-Process komorebi -ErrorAction SilentlyContinue) {
+    try { & 'C:\Program Files\komorebi\bin\komorebic.exe' stop 2>&1 | Out-Null } catch { }
+    Start-Sleep -Seconds 2
+}
 Get-Process komorebi, whkd, zebar -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
