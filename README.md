@@ -55,6 +55,32 @@ Alt is the window-manager key. Win keeps Windows' meanings (Win+D, Win+E, Win+L,
 
 Alt + R and Alt + Shift + Space are left free on purpose.
 
+## Layouts
+
+Each workspace has its own layout. **Alt + V** cycles through them, and the [Midnight Eclipse bar](https://github.com/S0wet0/midnight-eclipse)'s layout drawer picks one directly. Every workspace starts in BSP.
+
+| BSP | Vertical Stack |
+|---|---|
+| ![BSP layout](docs/layouts/bsp.jpg) | ![Vertical Stack layout](docs/layouts/vertical-stack.jpg) |
+| Each new window splits the focused one in half, alternating direction, so windows spiral inwards. | One main window on the left; the rest stack on the right. |
+
+| Right Main Vertical Stack | Horizontal Stack |
+|---|---|
+| ![Right Main Vertical Stack layout](docs/layouts/right-main-vertical-stack.jpg) | ![Horizontal Stack layout](docs/layouts/horizontal-stack.jpg) |
+| The mirror image: main window on the right, the stack on the left. | One main window across the top; the rest side by side underneath. |
+
+| Columns | Rows |
+|---|---|
+| ![Columns layout](docs/layouts/columns.jpg) | ![Rows layout](docs/layouts/rows.jpg) |
+| Every window gets a full-height column of equal width. | Every window gets a full-width row of equal height. |
+
+| Grid | Ultrawide Vertical Stack |
+|---|---|
+| ![Grid layout](docs/layouts/grid.jpg) | ![Ultrawide Vertical Stack layout](docs/layouts/ultrawide-vertical-stack.jpg) |
+| Windows fill an even grid. | Main window in the centre, one column on the left, the rest stacked on the right. Made for wide screens. |
+
+**Scrolling** is the ninth: windows sit side by side in columns, only a few fit on screen at once, and the view scrolls sideways as focus moves.
+
 ## What the config does
 
 - **2px gaps everywhere.** komorebi insets each window by its container padding plus the border's width and offset. Here that's 0 + (2 − 1) = 1px per window, so neighbouring windows are 2px apart. The 1px workspace padding plus that 1px inset gives 2px at the screen edges too.
