@@ -15,9 +15,17 @@
 #       Elevated - "Run with highest privileges": komorebi + whkd
 #       User     - normal privileges: Zebar, after komorebi answers
 #     Launched via `conhost --headless` so no console window appears.
-#  3. Switches over immediately: stops the current komorebi/whkd/Zebar and
+#  3. Switches over immediately: stops this session's komorebi/whkd/Zebar and
 #     starts both tasks, then prints a status report.
+#
+# The tasks are set up for the account signed in to this desktop, not the
+# account used to elevate: on a standard account, "Run as administrator"
+# with another admin's password would otherwise set everything up for that
+# admin. Use -User DOMAIN\name to choose explicitly. (A standard account has
+# no elevated token, so its "elevated" task runs komorebi and whkd at normal
+# privilege: admin windows won't be tiled or reachable by keybindings.)
 
+param([string]$User)
 $ErrorActionPreference = 'Stop'
 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -29,9 +37,23 @@ $Source    = Split-Path -Parent $MyInvocation.MyCommand.Path          # autostar
 $ConfigDir = Split-Path -Parent $Source                               # preset root (whkdrc)
 $Root      = Join-Path $env:ProgramData 'komorebi-desktop'
 $TaskPath  = '\komorebi-desktop\'
-$User      = $identity.Name
+$Session   = (Get-Process -Id $PID).SessionId
+
+# The desktop's user = the owner of Explorer in this session.
+if (-not $User) {
+    foreach ($p in Get-CimInstance Win32_Process -Filter "Name='explorer.exe'") {
+        if ($p.SessionId -ne $Session) { continue }
+        $owner = Invoke-CimMethod -InputObject $p -MethodName GetOwner
+        if ($owner.ReturnValue -eq 0) { $User = "$($owner.Domain)\$($owner.User)"; break }
+    }
+}
+if (-not $User) { $User = $identity.Name; Write-Warning "couldn't tell who is signed in; using $User (pass -User to choose)" }
+$UserSid     = (New-Object Security.Principal.NTAccount($User)).Translate([Security.Principal.SecurityIdentifier]).Value
+$UserProfile = (Get-CimInstance Win32_UserProfile -Filter "SID='$UserSid'").LocalPath
+if (-not $UserProfile) { throw "no profile folder found for $User" }
 
 Write-Host "Installing for $User into $Root"
+if ($User -ne $identity.Name) { Write-Host "(elevated as $($identity.Name); the tasks run as $User)" }
 
 # --- 0. stop any previous supervisors so they don't fight the new ones -----
 foreach ($name in 'Elevated', 'User') {
@@ -82,7 +104,8 @@ Write-Host 'install folder created and locked to Administrators/SYSTEM (others r
 
 # Keep the user-profile whkdrc in sync too, so a manual `komorebic start --whkd`
 # (normal privileges) still has the same bindings. The tasks don't read it.
-Copy-Item (Join-Path $ConfigDir 'whkdrc') (Join-Path $env:USERPROFILE '.config\whkdrc') -Force
+New-Item -ItemType Directory -Force -Path (Join-Path $UserProfile '.config') | Out-Null
+Copy-Item (Join-Path $ConfigDir 'whkdrc') (Join-Path $UserProfile '.config\whkdrc') -Force
 
 # --- 2. logon tasks ----------------------------------------------------------
 function Register-Supervisor($name, $script, $runLevel, $description) {
@@ -105,11 +128,13 @@ Write-Host 'stopping current komorebi / whkd / Zebar...'
 # Only if it's running: under ErrorActionPreference=Stop, Windows PowerShell
 # 5.1 turns a native program's stderr into a terminating error even when
 # redirected, and komorebic prints one when komorebi isn't there.
-if (Get-Process komorebi -ErrorAction SilentlyContinue) {
+# This session only: other signed-in users' instances are left alone.
+if (Get-Process komorebi -ErrorAction SilentlyContinue | Where-Object SessionId -eq $Session) {
     try { & 'C:\Program Files\komorebi\bin\komorebic.exe' stop 2>&1 | Out-Null } catch { }
     Start-Sleep -Seconds 2
 }
-Get-Process komorebi, whkd, zebar -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process komorebi, whkd, zebar -ErrorAction SilentlyContinue | Where-Object SessionId -eq $Session |
+    Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
 Start-ScheduledTask -TaskPath $TaskPath -TaskName 'Elevated'
@@ -134,7 +159,7 @@ public static class Elev {
 Write-Host ''
 Write-Host '=== status ==='
 foreach ($want in @(@('komorebi','elevated'), @('whkd','elevated'), @('zebar','normal'))) {
-    $procs = @(Get-Process $want[0] -ErrorAction SilentlyContinue)
+    $procs = @(Get-Process $want[0] -ErrorAction SilentlyContinue | Where-Object SessionId -eq $Session)
     if (-not $procs) { Write-Host ("{0,-9} NOT RUNNING" -f $want[0]); continue }
     foreach ($p in $procs) {
         $level = [Elev]::Of($p.Id)
@@ -146,5 +171,5 @@ foreach ($name in 'Elevated', 'User') {
     Write-Host ("task {0,-9} last result 0x{1:X}  ({2})" -f $name, $info.LastTaskResult, $(if ($info.LastTaskResult -eq 0x41301) { 'running' } else { 'see Task Scheduler' }))
 }
 Write-Host ''
-Write-Host "Logs: $Root\logs\elevated.log  and  $env:LOCALAPPDATA\komorebi-desktop\logs\user.log"
+Write-Host "Logs: $Root\logs\elevated.log  and  %LOCALAPPDATA%\komorebi-desktop\logs\user.log (in $User's profile)"
 Get-Content (Join-Path $Root 'logs\elevated.log') -Tail 6 -ErrorAction SilentlyContinue

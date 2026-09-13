@@ -77,6 +77,8 @@ Alt + R and Alt + Shift + Space are left free on purpose.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\autostart\install.ps1
 ```
 
+The tasks are set up for the account signed in to the desktop, even if you elevate with a different administrator's password; pass `-User DOMAIN\name` to choose another. On a standard (non-admin) account there's no elevation to use, so komorebi and whkd run at normal privilege and admin windows won't be tiled.
+
 It registers two scheduled tasks under `\komorebi-desktop\`:
 
 | Task | Runs | Why |
