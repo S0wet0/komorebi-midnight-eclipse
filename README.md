@@ -79,7 +79,10 @@ Each workspace has its own layout. **Alt + V** cycles through them, and the [Mid
 | ![Grid layout](docs/layouts/grid.jpg) | ![Ultrawide Vertical Stack layout](docs/layouts/ultrawide-vertical-stack.jpg) |
 | Windows fill an even grid. | Main window in the centre, one column on the left, the rest stacked on the right. Made for wide screens. |
 
-**Scrolling** is the ninth: windows sit side by side in columns, only a few fit on screen at once, and the view scrolls sideways as focus moves.
+| Scrolling | |
+|---|---|
+| ![Scrolling layout](docs/layouts/columns.jpg) | |
+| Windows sit side by side in columns; when more are open than fit, the view scrolls sideways as focus moves. | |
 
 ## What the config does
 
