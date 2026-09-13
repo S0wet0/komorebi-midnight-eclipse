@@ -2,9 +2,9 @@
 
 A keyboard-first [komorebi](https://github.com/LGUG2Z/komorebi) setup for Windows 11: tight 2px gaps, a soft blue focus border, nine workspaces, and Alt-based keybindings that leave Windows' own Win-key shortcuts alone.
 
-It's the window-manager half of **Midnight Eclipse**: it reserves the top 44px for the **[Midnight Eclipse Zebar bar](https://github.com/S0wet0/midnight-eclipse)** and uses the bar's accent colour for the focus border.
+It's the window-manager half of **Midnight Eclipse**: it reserves the top 44px for the **[Midnight Eclipse Zebar bar](https://github.com/S0wet0/midnight-eclipse)** and uses the bar's accent colour for the focus border. It works without the bar too; see [Using it without the bar](#using-it-without-the-bar).
 
-![komorebi with the Midnight Eclipse bar](https://raw.githubusercontent.com/S0wet0/midnight-eclipse/main/docs/preview.png) It works without the bar too; see [Using it without the bar](#using-it-without-the-bar).
+![komorebi tiling windows in BSP with the Midnight Eclipse bar](docs/layouts/bsp.jpg)
 
 ## Requirements
 
