@@ -107,6 +107,11 @@ Write-Host 'install folder created and locked to Administrators/SYSTEM (others r
 New-Item -ItemType Directory -Force -Path (Join-Path $UserProfile '.config') | Out-Null
 Copy-Item (Join-Path $ConfigDir 'whkdrc') (Join-Path $UserProfile '.config\whkdrc') -Force
 
+# The Midnight Eclipse theme's own logon entry would start Zebar a second
+# time, before komorebi is ready; the User task below takes over.
+Remove-ItemProperty -Path "Registry::HKEY_USERS\$UserSid\Software\Microsoft\Windows\CurrentVersion\Run" `
+    -Name 'Midnight Eclipse (Zebar)' -ErrorAction SilentlyContinue
+
 # --- 2. logon tasks ----------------------------------------------------------
 function Register-Supervisor($name, $script, $runLevel, $description) {
     $action = New-ScheduledTaskAction -Execute "$env:WINDIR\System32\conhost.exe" `
@@ -129,11 +134,17 @@ Write-Host 'stopping current komorebi / whkd / Zebar...'
 # 5.1 turns a native program's stderr into a terminating error even when
 # redirected, and komorebic prints one when komorebi isn't there.
 # This session only: other signed-in users' instances are left alone.
-if (Get-Process komorebi -ErrorAction SilentlyContinue | Where-Object SessionId -eq $Session) {
+# komorebic reaches komorebi through the running account's own AppData, so
+# elevated as a different admin it can't stop the user's komorebi cleanly;
+# killing it then would leave windows on other workspaces cloaked. Leave it
+# running instead: start-elevated.ps1 adopts a running komorebi.
+$stopKomorebi = $User -eq $identity.Name
+if ($stopKomorebi -and (Get-Process komorebi -ErrorAction SilentlyContinue | Where-Object SessionId -eq $Session)) {
     try { & 'C:\Program Files\komorebi\bin\komorebic.exe' stop 2>&1 | Out-Null } catch { }
     Start-Sleep -Seconds 2
 }
-Get-Process komorebi, whkd, zebar -ErrorAction SilentlyContinue | Where-Object SessionId -eq $Session |
+$toStop = if ($stopKomorebi) { 'komorebi', 'whkd', 'zebar' } else { 'whkd', 'zebar' }
+Get-Process $toStop -ErrorAction SilentlyContinue | Where-Object SessionId -eq $Session |
     Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
