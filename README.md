@@ -98,6 +98,8 @@ If you'd rather not run anything elevated, skip autostart and start komorebi you
 
 Logs are in `C:\ProgramData\komorebi-desktop\logs\elevated.log` and `%LOCALAPPDATA%\komorebi-desktop\logs\user.log`. To remove the autostart, run `autostart\uninstall.ps1` as administrator (add `-RemoveFiles` to also delete the ProgramData folder).
 
+If the Midnight Eclipse theme is installed, the autostart takes over starting Zebar and removes the theme's own logon entry, so Zebar isn't launched twice. The uninstaller gives that entry back, so the bar keeps starting at logon without the preset.
+
 The supervisors expect the default install locations: `C:\Program Files\komorebi\bin`, `C:\Program Files\whkd\bin` and `C:\Program Files\glzr.io\Zebar`. If yours differ, edit the paths at the top of `autostart\start-elevated.ps1` and `autostart\start-user.ps1` before installing.
 
 ## Using it without the bar
