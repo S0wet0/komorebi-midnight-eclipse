@@ -46,16 +46,48 @@ function Test-KomorebiReady {
     return ($LASTEXITCODE -eq 0)
 }
 
+# komorebi exits at once (code 1, "failed call to AllowSetForegroundWindow")
+# unless it may bring windows to the front. Windows grants that only to the
+# process the user is working with, processes it starts, or anyone while
+# nothing is in the foreground: true at most logons, but not if an app wins
+# the race at logon, nor for a crash restart while the user is working.
+# Windows also re-grants it when Alt is pressed. So after a startup failure,
+# the next attempt first sends one no-op chord (Alt + 0xE8, an unassigned key
+# code, the same dummy whkd uses; SendInput delivers it as one unbroken
+# sequence, so it can't mix with the user's typing) and opens foreground
+# rights to any process, then launches komorebi immediately.
+Add-Type @"
+using System; using System.Runtime.InteropServices;
+public static class Foreground {
+  [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT { public ushort wVk, wScan; public uint dwFlags, time; public IntPtr dwExtraInfo; }
+  [StructLayout(LayoutKind.Sequential)] struct INPUT { public uint type; public KEYBDINPUT ki; public long pad; }
+  [DllImport("user32.dll")] static extern uint SendInput(uint n, INPUT[] i, int size);
+  [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int pid);
+  static INPUT Key(ushort vk, bool up) { var i = new INPUT(); i.type = 1; i.ki.wVk = vk; i.ki.dwFlags = up ? 2u : 0u; return i; }
+  public static string Unlock() {
+    var keys = new[] { Key(0x12, false), Key(0xE8, false), Key(0xE8, true), Key(0x12, true) };
+    uint sent = SendInput((uint)keys.Length, keys, Marshal.SizeOf(typeof(INPUT)));
+    return "sent " + sent + " keys, allow-any " + AllowSetForegroundWindow(-1);
+  }
+}
+"@
+$unlockNext = $false
+
 function Start-Komorebi {
     if (Test-Path $StateFile) { Remove-Item $StateFile -Force -ErrorAction SilentlyContinue; Log 'cleared komorebi state snapshot' }
+    if ($script:unlockNext) { Log "foreground unlock before starting: $([Foreground]::Unlock())" }
     $proc = Start-Process -FilePath $Komorebi -WindowStyle Hidden -PassThru
     Log "started komorebi (pid $($proc.Id))"
     $deadline = (Get-Date).AddSeconds(30)
     while ((Get-Date) -lt $deadline -and -not $proc.HasExited) {
-        if (Test-KomorebiReady) { Log 'komorebi is answering'; return $proc }
+        if (Test-KomorebiReady) { Log 'komorebi is answering'; $script:unlockNext = $false; return $proc }
         Start-Sleep -Milliseconds 500
     }
-    Log 'komorebi did not answer within 30s'
+    if ($proc.HasExited) {
+        # Almost always the foreground check above: unlock on the next try.
+        Log "komorebi exited during startup (code $($proc.ExitCode)); the next start unlocks the foreground first"
+        $script:unlockNext = $true
+    } else { Log 'komorebi did not answer within 30s' }
     return $proc
 }
 
